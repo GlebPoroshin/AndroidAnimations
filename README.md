@@ -13,7 +13,11 @@ The project includes several unique gradient animation types, organized in a smo
 
 ## 📱 Demo
 
-*I will insert a video here*
+
+
+https://github.com/user-attachments/assets/1253a299-074e-4c96-8083-7f8997619f9b
+
+
 
 ## 🛠 Technical Highlights
 
