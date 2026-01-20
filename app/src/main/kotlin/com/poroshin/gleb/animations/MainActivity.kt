@@ -1,6 +1,6 @@
 package com.poroshin.gleb.animations
 
-import GradientAnimationsScreen
+import com.poroshin.gleb.animations.screens.GradientAnimationsScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent

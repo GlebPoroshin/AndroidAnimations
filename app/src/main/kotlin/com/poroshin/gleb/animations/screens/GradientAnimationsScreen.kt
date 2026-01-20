@@ -1,17 +1,35 @@
+package com.poroshin.gleb.animations.screens
+
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -26,62 +44,121 @@ import com.poroshin.gleb.animations.ui.theme.AnimationsTheme
 
 @Composable
 fun GradientAnimationsScreen(modifier: Modifier = Modifier) {
-    LazyColumn(
-        modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        item {
-            GradientCard(
-                title = "1) Вращающийся линейный градиент",
-                subtitle = "LinearGradient: направление крутится вокруг центра",
-            ) { RotatingLinearGradientBox() }
-        }
+    val animations = remember {
+        listOf<@Composable () -> Unit>(
+            { RotatingLinearGradientBox() },
+            { VerticalMovingLinearGradientBox() },
+            { ParabolaWaveGradientBox() },
+            { ParabolaGradientCarouselBox(Modifier.blur(16.dp)) }
+        )
+    }
 
-        item {
-            GradientCard(
-                title = "2) Линейный вертикальный",
-                subtitle = "сдвиг по Y (вверх-вниз)",
-            ) { VerticalMovingLinearGradientBox() }
-        }
+    val titles = remember {
+        listOf(
+            "1) Вращающийся линейный градиент",
+            "2) Линейный вертикальный",
+            "3) Синусоид",
+            "4) Параболоид"
+        )
+    }
 
-        item {
-            GradientCard(
-                title = "3) Синусоид",
-                subtitle = "Циклические колебание синусоида",
-            ) { ParabolaWaveGradientBox() }
-        }
-        item {
-            GradientCard(
-                title = "4) Параболоид",
-                subtitle = "Изменение коэффицента k,  отвечающего за скорость роста ветвей (шире - уже), а также вершины параболы. Одна ула, вторая началась. \n 0 <=k<=2 ",
+    val subtitles = remember {
+        listOf(
+            "LinearGradient: направление крутится вокруг центра",
+            "сдвиг по Y (вверх-вниз)",
+            "Циклические колебание синусоида",
+            "Изменение коэффицента k, отвечающего за скорость роста ветвей (шире - уже), а также вершины параболы."
+        )
+    }
+
+    val pagerState = rememberPagerState(pageCount = { animations.size })
+
+    Box(modifier = modifier.fillMaxSize()) {
+        VerticalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+        ) { page ->
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                ParabolaGradientCarouselBox(
-                    Modifier.blur(16.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = titles[page],
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                    Text(
+                        text = subtitles[page],
+                        color = Color(0xFF9AA4AF),
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                            .clip(CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        animations[page]()
+                    }
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 80.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            repeat(animations.size) { iteration ->
+                val color = if (pagerState.currentPage == iteration) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                }
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(color)
                 )
             }
         }
-    }
-}
 
-@Composable
-private fun GradientCard(
-    title: String,
-    subtitle: String,
-    content: @Composable BoxScope.() -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(title, fontWeight = FontWeight.SemiBold)
-        Text(subtitle, color = Color(0xFF9AA4AF))
+        if (pagerState.currentPage == 0 && !pagerState.isScrollInProgress) {
+            val infiniteTransition = rememberInfiniteTransition(label = "hint")
+            val translateY by infiniteTransition.animateFloat(
+                initialValue = 0f,
+                targetValue = 15f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(1000),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "translateY"
+            )
 
-        Box(
-            modifier = Modifier
-                .size(140.dp)
-                .clip(CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            content()
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 32.dp)
+                    .alpha(0.6f),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .padding(top = translateY.dp)
+                )
+            }
         }
     }
 }
